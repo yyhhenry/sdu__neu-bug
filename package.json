@@ -1,0 +1,46 @@
+{
+  "name": "sdu__new-bug",
+  "private": true,
+  "scripts": {
+    "lint": "eslint --fix src/",
+    "fmt": "prettier --write src/",
+    "dev": "vite",
+    "type-check": "vue-tsc --noEmit",
+    "build-only": "vite build",
+    "build": "run-s build-only type-check",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@mdi/font": "7.4.47",
+    "@vueuse/core": "^11.2.0",
+    "@yyhhenry/type-guard-map": "npm:@jsr/yyhhenry__type-guard-map@^0.3.1",
+    "openai": "^4.71.1",
+    "roboto-fontface": "^0.10.0",
+    "uuid": "^10.0.0",
+    "validator": "^13.12.0",
+    "vue": "^3.5.12",
+    "vue-router": "^4.4.5",
+    "vuetify": "^3.7.4"
+  },
+  "devDependencies": {
+    "@babel/types": "^7.26.0",
+    "@eslint/js": "^9.14.0",
+    "@types/node": "^20.17.6",
+    "@types/uuid": "^10.0.0",
+    "@types/validator": "^13.12.2",
+    "@vitejs/plugin-vue": "^5.1.4",
+    "eslint": "^9.14.0",
+    "eslint-plugin-vue": "^9.30.0",
+    "globals": "^15.12.0",
+    "npm-run-all2": "^6.2.6",
+    "prettier": "^3.3.3",
+    "sass": "1.77.6",
+    "typescript": "^5.6.3",
+    "typescript-eslint": "^8.13.0",
+    "unplugin-fonts": "^1.1.1",
+    "unplugin-vue-components": "^0.27.4",
+    "vite": "^5.4.10",
+    "vite-plugin-vuetify": "^2.0.4",
+    "vue-tsc": "^2.1.10"
+  }
+}
