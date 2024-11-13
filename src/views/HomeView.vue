@@ -38,7 +38,7 @@ const navSelected = ref<string[]>([]);
     </v-navigation-drawer>
 
     <v-navigation-drawer v-model="navDrawer">
-      <v-list v-model:selected="navSelected">
+      <v-list v-model:selected="navSelected" mandatory>
         <v-list-group value="我的面板Panel">
           <template #activator="{ props }">
             <v-list-item v-bind="props" title="我的面板"></v-list-item>
