@@ -29,6 +29,8 @@ export function showSnackbar(
   globalSnackbar.value = { msg, color, until: now + timeout };
 }
 
+export type RuleSets<T> = ((v: T) => true | string)[];
+
 export class GSnackbar {
   static info(msg: string, timeout: number = 1000) {
     showSnackbar(msg, 'info', timeout);
@@ -38,5 +40,15 @@ export class GSnackbar {
   }
   static error(msg: string, timeout: number = 1000) {
     showSnackbar(msg, 'error', timeout);
+  }
+  static accept<T>(v: T, ruleSets: RuleSets<T>) {
+    for (const rule of ruleSets) {
+      const result = rule(v);
+      if (result !== true) {
+        GSnackbar.error(result);
+        return false;
+      }
+    }
+    return true;
   }
 }

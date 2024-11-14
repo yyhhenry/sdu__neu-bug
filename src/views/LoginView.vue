@@ -1,6 +1,47 @@
 <script lang="ts" setup>
+import { getPrivilegeNameOfRole, loginApi } from '@/utils/account';
 import { GSnackbar } from '@/utils/global-snackbar';
 import { theme, switchTheme, themeIcon } from '@/utils/theme';
+import { wrapAsyncFn } from '@yyhhenry/rust-result';
+import { ref } from 'vue';
+import { useRouter } from 'vue-router';
+
+const username = ref('');
+const password = ref('');
+
+const usernameRules = [
+  (v: string) => v.length > 0 || '用户名不能为空',
+  (v: string) => /^[a-zA-Z0-9]+$/.test(v) || '用户名只可以包含字母和数字',
+  (v: string) => (v.length >= 5 && v.length <= 30) || '用户名长度应在5-30之间',
+];
+const passwordRules = [
+  (v: string) => v.length > 0 || '密码不能为空',
+  (v: string) =>
+    /^[\x20-\x7E]+$/.test(v) || '密码只可以包含可见ASCII字符和空格',
+  (v: string) => (v.length >= 6 && v.length <= 20) || '密码长度应在6-20之间',
+];
+const router = useRouter();
+
+const onLogin = async () => {
+  if (
+    GSnackbar.accept(username.value, usernameRules) &&
+    GSnackbar.accept(password.value, passwordRules)
+  ) {
+    const res = await wrapAsyncFn(loginApi)({
+      username: username.value,
+      password: password.value,
+    });
+    res.match(
+      (res) => {
+        GSnackbar.success(
+          `登录成功，身份：${getPrivilegeNameOfRole(res.role)}`,
+        );
+        router.push('/');
+      },
+      (e) => GSnackbar.error(e.message),
+    );
+  }
+};
 </script>
 <template>
   <v-app :theme="theme">
@@ -26,23 +67,21 @@ import { theme, switchTheme, themeIcon } from '@/utils/theme';
               <v-text-field
                 prepend-inner-icon="mdi-account"
                 label="用户名"
+                v-model="username"
+                :rules="usernameRules"
               ></v-text-field>
               <v-text-field
                 prepend-inner-icon="mdi-lock"
                 type="password"
                 label="密码"
+                v-model="password"
+                :rules="passwordRules"
               ></v-text-field>
             </div>
           </v-card-text>
           <v-card-actions>
             <v-spacer></v-spacer>
-            <v-btn
-              variant="tonal"
-              size="large"
-              @click="GSnackbar.error('登录（尚未开发）')"
-            >
-              登录
-            </v-btn>
+            <v-btn variant="tonal" size="large" @click="onLogin"> 登录 </v-btn>
           </v-card-actions>
         </v-card>
       </v-container>

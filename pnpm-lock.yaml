@@ -14,9 +14,12 @@ importers:
       '@vueuse/core':
         specifier: ^11.2.0
         version: 11.2.0(vue@3.5.12(typescript@5.6.3))
+      '@yyhhenry/rust-result':
+        specifier: npm:@jsr/yyhhenry__rust-result@^0.5.0
+        version: '@jsr/yyhhenry__rust-result@0.5.0'
       '@yyhhenry/type-guard-map':
-        specifier: npm:@jsr/yyhhenry__type-guard-map@^0.3.1
-        version: '@jsr/yyhhenry__type-guard-map@0.3.1'
+        specifier: npm:@jsr/yyhhenry__type-guard-map@^0.4.0
+        version: '@jsr/yyhhenry__type-guard-map@0.4.0'
       msw:
         specifier: ^2.6.4
         version: 2.6.4(@types/node@20.17.6)(typescript@5.6.3)
@@ -346,11 +349,11 @@ packages:
   '@jridgewell/sourcemap-codec@1.5.0':
     resolution: {integrity: sha512-gv3ZRaISU3fjPAgNsriBRqGWQL6quFx04YMPW/zD8XMLsU32mhCCbfbO6KZFLjvYpCZ8zyDEgqsgf+PwPaM7GQ==}
 
-  '@jsr/yyhhenry__rust-result@0.4.0':
-    resolution: {integrity: sha512-PNyZkiWvuTlWv5NQqNZAodoA8iMawtAhewxHAEwgm7QLYbu5sA5xNCYPjonhN+bY8FcVdPg1RzPOgp0v4VgSQQ==, tarball: https://npm.jsr.io/~/11/@jsr/yyhhenry__rust-result/0.4.0.tgz}
+  '@jsr/yyhhenry__rust-result@0.5.0':
+    resolution: {integrity: sha512-HZZMdKgmqfz3uhJArNjlYVr8dHEpHK4DKg/FN16v7CZpk6kWxieeUcrOWtt0+CXe/F15k0D5O8x/KpSoKkiWCw==, tarball: https://npm.jsr.io/~/11/@jsr/yyhhenry__rust-result/0.5.0.tgz}
 
-  '@jsr/yyhhenry__type-guard-map@0.3.1':
-    resolution: {integrity: sha512-020kgo5n9WyitGh2bRS/PyPsOshRYrYX5GVUTYvwSYklS7PTgtcN9UupvzjieXHQCjqh0lFqlHCyKh1Z8RjmXw==, tarball: https://npm.jsr.io/~/11/@jsr/yyhhenry__type-guard-map/0.3.1.tgz}
+  '@jsr/yyhhenry__type-guard-map@0.4.0':
+    resolution: {integrity: sha512-FZF1SeSo+nsvS/rKOc923ZQMLA1d/WroSKAAkb0pPYFyWiVhKn9Jub2mCDLb2EBjsPNbfm02UfTi5fQHiIRbKw==, tarball: https://npm.jsr.io/~/11/@jsr/yyhhenry__type-guard-map/0.4.0.tgz}
 
   '@mdi/font@7.4.47':
     resolution: {integrity: sha512-43MtGpd585SNzHZPcYowu/84Vz2a2g31TvPMTm9uTiCSWzaheQySUcSyUH/46fPnuPQWof2yd0pGBtzee/IQWw==}
@@ -1760,11 +1763,11 @@ snapshots:
 
   '@jridgewell/sourcemap-codec@1.5.0': {}
 
-  '@jsr/yyhhenry__rust-result@0.4.0': {}
+  '@jsr/yyhhenry__rust-result@0.5.0': {}
 
-  '@jsr/yyhhenry__type-guard-map@0.3.1':
+  '@jsr/yyhhenry__type-guard-map@0.4.0':
     dependencies:
-      '@jsr/yyhhenry__rust-result': 0.4.0
+      '@jsr/yyhhenry__rust-result': 0.5.0
 
   '@mdi/font@7.4.47': {}
 

@@ -1,10 +1,24 @@
 <script lang="ts" setup>
-import { ref } from 'vue';
+import { ref, watchEffect } from 'vue';
 import { switchTheme, theme, themeIcon } from '@/utils/theme';
 import GlobalSnackbar from '@/components/GlobalSnackbar.vue';
+import { accountStorage, logoutApi, privilegeName } from '@/utils/account';
+import { useRouter } from 'vue-router';
 import { GSnackbar } from '@/utils/global-snackbar';
 const navDrawer = ref(true);
 const navSelected = ref<string[]>([]);
+
+const router = useRouter();
+watchEffect(() => {
+  if (accountStorage.value === null) {
+    GSnackbar.error('请先登录');
+    router.push('/login');
+  }
+});
+const onLogout = () => {
+  logoutApi();
+  router.push('/login');
+};
 </script>
 <template>
   <v-app :theme="theme">
@@ -14,12 +28,14 @@ const navSelected = ref<string[]>([]);
         <v-btn icon="mdi-menu" @click="navDrawer = !navDrawer"> </v-btn>
       </template>
       <template #append>
+        <p v-if="accountStorage">
+          欢迎{{ privilegeName }}
+          <span style="background-color: rgba(120, 120, 120, 0.4)" class="pa-1">
+            {{ accountStorage.username }}
+          </span>
+        </p>
         <v-btn :icon="themeIcon" @click="switchTheme" :title="theme"></v-btn>
-        <v-btn
-          @click="GSnackbar.error('登出（尚未开发）')"
-          icon="mdi-logout"
-          title="Logout"
-        />
+        <v-btn @click="onLogout" icon="mdi-logout" title="Logout" />
       </template>
     </v-app-bar>
     <v-navigation-drawer v-model="navDrawer">

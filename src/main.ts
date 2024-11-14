@@ -12,7 +12,7 @@ import App from './App.vue';
 
 import { createApp } from 'vue';
 import { createRouter, createWebHashHistory } from 'vue-router';
-import '@/mocks/mock';
+import { mockWorker } from '@/mocks/mock';
 
 const app = createApp(App);
 
@@ -31,3 +31,9 @@ const router = createRouter({
 app.use(router);
 
 app.mount('#app');
+
+if (import.meta.env.DEV) {
+  await mockWorker.start({
+    onUnhandledRequest: 'bypass',
+  });
+}
