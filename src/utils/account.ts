@@ -3,6 +3,18 @@ import { useCheckedStorage } from './storage';
 import { computed } from 'vue';
 import { GSnackbar } from './global-snackbar';
 
+export const usernameRules = [
+  (v: string) => v.length > 0 || '用户名不能为空',
+  (v: string) => /^[a-zA-Z0-9]+$/.test(v) || '用户名只可以包含字母和数字',
+  (v: string) => (v.length >= 5 && v.length <= 30) || '用户名长度应在5-30之间',
+];
+export const passwordRules = [
+  (v: string) => v.length > 0 || '密码不能为空',
+  (v: string) =>
+    /^[\x20-\x7E]+$/.test(v) || '密码只可以包含可见ASCII字符和空格',
+  (v: string) => (v.length >= 6 && v.length <= 20) || '密码长度应在6-20之间',
+];
+
 export const DMsgRes = struct({
   type: literal('info', 'success', 'error'),
   msg: DString,
@@ -154,4 +166,25 @@ export async function getUserInfoApi(username?: string) {
     throw new Error(res.msg);
   }
   return DUserInfo.validate(res).unwrap();
+}
+
+export interface ChangePasswordReq {
+  oldPassword: string;
+  newPassword: string;
+}
+
+export async function changePasswordApi(req: ChangePasswordReq) {
+  const res: unknown = await fetch('/api/change-password', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(await getAuthHeader()),
+    },
+    body: JSON.stringify(req),
+  }).then((res) => res.json());
+  const msgRes = DMsgRes.validate(res).unwrap();
+  if (msgRes.type === 'error') {
+    throw new Error(msgRes.msg);
+  }
+  return msgRes.msg;
 }

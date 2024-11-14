@@ -97,6 +97,10 @@ const onLogout = () => {
         v-if="navSelected[0] === '用户信息'"
         :breadcrumbs="['我的面板']"
       />
+      <ChangePasswordTab
+        v-else-if="navSelected[0] === '修改密码'"
+        :breadcrumbs="['我的面板']"
+      />
       <v-container v-else>
         <p>{{ navSelected[0] }} 尚未开发</p>
       </v-container>

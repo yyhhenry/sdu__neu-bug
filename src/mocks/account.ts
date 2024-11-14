@@ -32,4 +32,10 @@ export const loginHandlers: RequestHandler[] = [
       email: req.params.id + '@example.com',
     }),
   ),
+  http.post('/api/change-password', () =>
+    HttpResponse.json({
+      type: 'success',
+      msg: '密码修改成功',
+    }),
+  ),
 ];
