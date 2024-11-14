@@ -66,7 +66,7 @@ const onSubmit = async () => {
         </v-btn>
       </v-card-actions>
     </v-card>
-    <v-dialog v-model="confirmDialog" width="min(450px, 100%)">
+    <v-dialog v-model="confirmDialog" :max-width="450">
       <v-card>
         <v-card-title>确认修改密码</v-card-title>
         <v-card-text>确定修改密码吗？</v-card-text>
