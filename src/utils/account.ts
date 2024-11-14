@@ -116,7 +116,9 @@ export async function refreshTokenApi() {
  * });
  * ```
  */
-export async function getAuthHeader() {
+export async function getAuthHeader(): Promise<{
+  Authorization?: string;
+}> {
   await refreshTokenApi();
   if (accountStorage.value === null) {
     return {};
@@ -131,4 +133,25 @@ export async function getAuthHeader() {
  */
 export function logoutApi() {
   accountStorage.value = null;
+}
+
+export const DUserInfo = struct({
+  username: DString,
+  fullName: DString,
+  role: DRole,
+  email: DString,
+});
+
+export async function getUserInfoApi(username?: string) {
+  const target = username ?? accountStorage.value?.username;
+  if (target === null) {
+    throw new Error('未登录');
+  }
+  const res: unknown = await fetch(`/api/user/${target}`, {
+    headers: await getAuthHeader(),
+  }).then((res) => res.json());
+  if (DMsgRes.guard(res)) {
+    throw new Error(res.msg);
+  }
+  return DUserInfo.validate(res).unwrap();
 }
