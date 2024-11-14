@@ -1,11 +1,9 @@
 <script lang="ts" setup>
 import { ref } from 'vue';
-import { theme } from '@/utils/theme';
-import GlobalSettings from '@/components/GlobalSettings.vue';
+import { switchTheme, theme, themeIcon } from '@/utils/theme';
 import GlobalSnackbar from '@/components/GlobalSnackbar.vue';
 import { GSnackbar } from '@/utils/global-snackbar';
 const navDrawer = ref(true);
-const settingsDrawer = ref(false);
 const navSelected = ref<string[]>([]);
 </script>
 <template>
@@ -16,27 +14,14 @@ const navSelected = ref<string[]>([]);
         <v-btn icon="mdi-menu" @click="navDrawer = !navDrawer"> </v-btn>
       </template>
       <template #append>
+        <v-btn :icon="themeIcon" @click="switchTheme" :title="theme"></v-btn>
         <v-btn
           @click="GSnackbar.error('登出（尚未开发）')"
           icon="mdi-logout"
           title="Logout"
         />
-        <v-btn
-          icon="mdi-cog"
-          @click="settingsDrawer = !settingsDrawer"
-          title="Settings"
-        />
       </template>
     </v-app-bar>
-    <v-navigation-drawer
-      :width="400"
-      v-model="settingsDrawer"
-      :location="'right'"
-      temporary
-    >
-      <GlobalSettings />
-    </v-navigation-drawer>
-
     <v-navigation-drawer v-model="navDrawer">
       <v-list v-model:selected="navSelected" mandatory>
         <v-list-group value="我的面板Panel">
