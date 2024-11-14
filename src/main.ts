@@ -12,6 +12,7 @@ import App from './App.vue';
 
 import { createApp } from 'vue';
 import { createRouter, createWebHashHistory } from 'vue-router';
+import '@/mocks/mock';
 
 const app = createApp(App);
 
