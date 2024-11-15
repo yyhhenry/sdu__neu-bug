@@ -1,5 +1,5 @@
-import { DRole, DUserInfo, SearchUserReq, UserInfo } from '@/utils/account';
-import { DString, struct, TypeHelper } from '@yyhhenry/type-guard-map';
+import { DUserInfo, UserInfo } from '@/utils/account';
+import { DString, struct } from '@yyhhenry/type-guard-map';
 import { http, HttpResponse, RequestHandler } from 'msw';
 
 const expireTime = 1000 * 60 * 5;
@@ -138,17 +138,15 @@ export const loginHandlers: RequestHandler[] = [
     });
   }),
   http.get('/api/search-user', async (req) => {
-    const DSearchUserParams: TypeHelper<SearchUserReq> = struct({
-      username: DString.opt(),
-      fullName: DString.opt(),
-      email: DString.opt(),
-      role: DRole.opt(),
-    });
-    const params = DSearchUserParams.validate(req.params).unwrap();
+    const url = new URL(req.request.url);
+    const searchParams = url.searchParams;
     let results = mockUsers;
     for (const key of ['username', 'fullName', 'email', 'role'] as const) {
-      if (params[key]) {
-        results = results.filter((u) => u[key].indexOf(params[key]!) !== -1);
+      const value = searchParams.get(key);
+      if (value) {
+        results = results.filter(
+          (u) => u[key].toLowerCase().indexOf(value.toLowerCase()) !== -1,
+        );
       }
     }
     return HttpResponse.json({ users: results });

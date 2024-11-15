@@ -5,56 +5,64 @@ import {
   editUserApi,
   emailRules,
   getPrivilegeNameOfRole,
-  RoleType,
   searchUserApi,
+  UserInfo,
   usernameRules,
 } from '@/utils/account';
 import { GSnackbar } from '@/utils/global-snackbar';
 import { useRefreshCounter } from '@/utils/storage';
-import { asyncComputed } from '@vueuse/core';
+import { useDebounceFn, watchDeep } from '@vueuse/core';
 import { wrapAsyncFn } from '@yyhhenry/rust-result';
-import { ref } from 'vue';
+import { ref, watch } from 'vue';
 
 defineProps<{
   breadcrumbs: string[];
 }>();
-const searchUserParams = ref({
-  username: '',
-  fullName: '',
-  role: '',
-  email: '',
-});
-const roleMap: Record<string, RoleType | undefined> = {
+const usersRefreshCounter = useRefreshCounter();
+const roleMap = {
   管理员: 'admin',
   用户: 'user',
-  '': undefined,
+  全部: '',
+} as const;
+type SearchUser = {
+  username: string;
+  fullName: string;
+  role: keyof typeof roleMap;
+  email: string;
 };
-const usersRefreshCounter = useRefreshCounter();
-const users = asyncComputed(async () => {
-  usersRefreshCounter.require();
-  const req = {
-    ...searchUserParams.value,
-    role: roleMap[searchUserParams.value.role],
-  };
-  const users = await wrapAsyncFn(searchUserApi)(req);
-  return users.match(
-    (users) => users,
-    (e) => {
-      GSnackbar.error(e.message);
-      return undefined;
-    },
-  );
+const searchUser = ref<SearchUser>({
+  username: '',
+  fullName: '',
+  role: '全部',
+  email: '',
 });
+
+const isFiltering = ref(false);
+const users = ref<UserInfo[]>();
+const fetchUsers = async () => {
+  const req = {
+    username: searchUser.value.username,
+    fullName: searchUser.value.fullName,
+    role: roleMap[searchUser.value.role],
+    email: searchUser.value.email,
+  };
+  isFiltering.value = Object.values(req).some((v) => v !== '');
+  const res = await wrapAsyncFn(searchUserApi)(req);
+  res.match(
+    (res) => {
+      users.value = res.users;
+    },
+    (e) => GSnackbar.error(e.message),
+  );
+};
+const debouncedFetchUsers = useDebounceFn(fetchUsers, 500);
+watch(usersRefreshCounter.counter, fetchUsers, { immediate: true });
+watchDeep(searchUser, debouncedFetchUsers);
+
 const actionsTarget = ref('');
 
 const editDialog = ref(false);
-interface EditUser {
-  username: string;
-  fullName: string;
-  role: string;
-  email: string;
-}
-const editUser = ref<EditUser>();
+const editUser = ref<SearchUser>();
 const editConfirmDialog = ref(false);
 const onEditConfirm = () => {
   if (editUser.value === undefined) {
@@ -111,6 +119,35 @@ const onDelete = async () => {
         class="pa-4"
         style="font-size: 1.1em"
       >
+        <v-expansion-panels>
+          <v-expansion-panel>
+            <v-expansion-panel-title>
+              <span>筛选条件</span>
+              <span class="text-grey pa-1">
+                {{ isFiltering ? '筛选得到' : '共' }} {{ users.length }} 个用户
+              </span>
+            </v-expansion-panel-title>
+            <v-expansion-panel-text>
+              <v-text-field
+                v-model="searchUser.username"
+                label="用户名"
+              ></v-text-field>
+              <v-text-field
+                v-model="searchUser.fullName"
+                label="全名"
+              ></v-text-field>
+              <v-select
+                v-model="searchUser.role"
+                :items="['全部', '管理员', '用户']"
+                label="角色"
+              ></v-select>
+              <v-text-field
+                v-model="searchUser.email"
+                label="邮箱"
+              ></v-text-field>
+            </v-expansion-panel-text>
+          </v-expansion-panel>
+        </v-expansion-panels>
         <v-table>
           <thead>
             <tr>
@@ -122,7 +159,7 @@ const onDelete = async () => {
             </tr>
           </thead>
           <tbody>
-            <tr v-for="user of users.users" :key="user.username">
+            <tr v-for="user of users" :key="user.username">
               <td>{{ user.username }}</td>
               <td>{{ user.fullName }}</td>
               <td>{{ getPrivilegeNameOfRole(user.role) }}</td>

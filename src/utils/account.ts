@@ -54,7 +54,11 @@ export const accountStorage = useCheckedStorage(
 export const adminPrivilege = computed(
   () => accountStorage.value?.role === 'admin',
 );
-export function getPrivilegeNameOfRole(role?: 'admin' | 'user') {
+export function getPrivilegeNameOfRole(role: RoleType): '管理员' | '用户';
+export function getPrivilegeNameOfRole(
+  role?: RoleType,
+): '未登录' | '管理员' | '用户';
+export function getPrivilegeNameOfRole(role?: RoleType) {
   if (role === undefined) {
     return '未登录';
   }
@@ -238,9 +242,9 @@ export const DSearchUserRes = struct({
  */
 export async function searchUserApi(req: SearchUserReq) {
   const url = new URL('/api/search-user', window.location.origin);
-  for (const [key, value] of Object.entries(req)) {
-    if (value !== undefined) {
-      url.searchParams.set(key, value);
+  for (const key of ['username', 'fullName', 'email', 'role'] as const) {
+    if (req[key]) {
+      url.searchParams.set(key, req[key]!);
     }
   }
   const res: unknown = await fetch(url, {

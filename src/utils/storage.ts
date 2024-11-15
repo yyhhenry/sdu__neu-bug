@@ -20,5 +20,5 @@ export function useRefreshCounter() {
   const counter = ref(0);
   const refresh = () => (counter.value += 1);
   const require = () => counter.value;
-  return { counter, refresh, require };
+  return { counter, refresh, touch: require };
 }
