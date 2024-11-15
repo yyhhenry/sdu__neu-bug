@@ -8,7 +8,8 @@ export function useCheckedStorage<T>(
 ) {
   return useStorage<T>(key, defaultValue, undefined, {
     serializer: {
-      read: (text) => helper.parseWithDefault(text, defaultValue),
+      read: (text) =>
+        helper.parseWithDefault(text, helper.clone(defaultValue).unwrap()),
       write: JSON.stringify,
     },
   });

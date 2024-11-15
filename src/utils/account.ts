@@ -1,4 +1,10 @@
-import { DNumber, DString, literal, struct } from '@yyhhenry/type-guard-map';
+import {
+  DNumber,
+  DString,
+  InferType,
+  literal,
+  struct,
+} from '@yyhhenry/type-guard-map';
 import { useCheckedStorage } from './storage';
 import { computed } from 'vue';
 import { GSnackbar } from './global-snackbar';
@@ -21,6 +27,7 @@ export const DMsgRes = struct({
 });
 
 export const DRole = literal('admin', 'user');
+export type RoleType = InferType<typeof DRole>;
 export const DTokenPair = struct({
   accessToken: DString,
   refreshToken: DString,
@@ -153,7 +160,11 @@ export const DUserInfo = struct({
   role: DRole,
   email: DString,
 });
+export type UserInfo = InferType<typeof DUserInfo>;
 
+/**
+ * Get user information by username. (Admin only to get other's information)
+ */
 export async function getUserInfoApi(username?: string) {
   const target = username ?? accountStorage.value?.username;
   if (target === null) {
@@ -175,6 +186,94 @@ export interface ChangePasswordReq {
 
 export async function changePasswordApi(req: ChangePasswordReq) {
   const res: unknown = await fetch('/api/change-password', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(await getAuthHeader()),
+    },
+    body: JSON.stringify(req),
+  }).then((res) => res.json());
+  const msgRes = DMsgRes.validate(res).unwrap();
+  if (msgRes.type === 'error') {
+    throw new Error(msgRes.msg);
+  }
+  return msgRes.msg;
+}
+
+/**
+ * Edit user information. (Admin only)
+ */
+export async function editUserApi(username: string, req: UserInfo) {
+  const res: unknown = await fetch(`/api/user/${username}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(await getAuthHeader()),
+    },
+    body: JSON.stringify(req),
+  }).then((res) => res.json());
+  const msgRes = DMsgRes.validate(res).unwrap();
+  if (msgRes.type === 'error') {
+    throw new Error(msgRes.msg);
+  }
+  return msgRes.msg;
+}
+
+export interface SearchUserReq {
+  username?: string;
+  fullName?: string;
+  email?: string;
+  role?: string; // '' for all
+}
+export const DSearchUserRes = struct({
+  users: DUserInfo.arr(),
+});
+/**
+ * Search user by partial information. (Admin only)
+ */
+export async function searchUserApi(req: SearchUserReq) {
+  const url = new URL('/api/search-user', window.location.origin);
+  for (const [key, value] of Object.entries(req)) {
+    if (value !== undefined) {
+      url.searchParams.set(key, value);
+    }
+  }
+  const res: unknown = await fetch(url, {
+    headers: await getAuthHeader(),
+  }).then((res) => res.json());
+  if (DMsgRes.guard(res)) {
+    throw new Error(res.msg);
+  }
+  return DSearchUserRes.validate(res).unwrap();
+}
+
+/**
+ * Delete user. (Admin only)
+ */
+export async function deleteUserApi(username: string) {
+  const res: unknown = await fetch(`/api/user/${username}`, {
+    method: 'DELETE',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(await getAuthHeader()),
+    },
+  }).then((res) => res.json());
+  const msgRes = DMsgRes.validate(res).unwrap();
+  if (msgRes.type === 'error') {
+    throw new Error(msgRes.msg);
+  }
+  return msgRes.msg;
+}
+
+export interface RegisterReq {
+  info: UserInfo;
+  password: string;
+}
+/**
+ * Register a new account. (Admin only)
+ */
+export async function registerApi(req: RegisterReq) {
+  const res: unknown = await fetch('/api/register', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
