@@ -42,7 +42,12 @@ const onSubmit = async () => {
   <v-breadcrumbs :items="[...breadcrumbs, '修改密码']"></v-breadcrumbs>
   <v-container class="d-flex justify-center">
     <v-card width="min(800px, 100%)" class="ma-5">
-      <v-card-title>修改密码</v-card-title>
+      <v-card-title>
+        <div class="d-flex align-center ga-3">
+          <v-icon>mdi-square-edit-outline</v-icon>
+          <span> 修改密码 </span>
+        </div>
+      </v-card-title>
       <v-card-text class="pa-4">
         <v-text-field
           v-model="oldPassword"

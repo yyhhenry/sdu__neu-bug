@@ -43,6 +43,7 @@ const onLogout = () => {
           <template #activator="{ props }">
             <v-list-item
               prepend-icon="mdi-dots-square"
+              color="primary"
               v-bind="props"
               title="我的面板"
             ></v-list-item>
@@ -54,6 +55,7 @@ const onLogout = () => {
           <template #activator="{ props }">
             <v-list-item
               prepend-icon="mdi-projector-screen-variant-outline"
+              color="primary"
               v-bind="props"
               title="项目管理"
             ></v-list-item>
@@ -64,6 +66,7 @@ const onLogout = () => {
           <template #activator="{ props }">
             <v-list-item
               prepend-icon="mdi-calendar-check-outline"
+              color="primary"
               v-bind="props"
               title="任务分配"
             ></v-list-item>
@@ -74,6 +77,7 @@ const onLogout = () => {
           <template #activator="{ props }">
             <v-list-item
               prepend-icon="mdi-bug-check-outline"
+              color="primary"
               v-bind="props"
               title="缺陷管理"
             ></v-list-item>
@@ -84,6 +88,7 @@ const onLogout = () => {
           <template #activator="{ props }">
             <v-list-item
               prepend-icon="mdi-account-box-multiple"
+              color="primary"
               v-bind="props"
               title="用户管理"
             ></v-list-item>

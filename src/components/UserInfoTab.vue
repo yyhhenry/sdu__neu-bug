@@ -24,8 +24,17 @@ const userInfo = asyncComputed(async () => {
   <v-breadcrumbs :items="[...breadcrumbs, '用户信息']"></v-breadcrumbs>
   <v-container class="d-flex justify-center">
     <v-card width="min(800px, 100%)" class="ma-5">
-      <v-card-title>用户信息</v-card-title>
-      <v-card-text v-if="userInfo !== undefined" class="pa-4">
+      <v-card-title>
+        <div class="d-flex align-center ga-3">
+          <v-icon>mdi-account</v-icon>
+          <span> 用户信息 </span>
+        </div>
+      </v-card-title>
+      <v-card-text
+        v-if="userInfo !== undefined"
+        class="pa-4"
+        style="font-size: 1.1em"
+      >
         <v-row class="align-center">
           <v-col class="v-col-2 text-right"><v-label>用户名：</v-label></v-col>
           <v-col>{{ userInfo.username }}</v-col>
