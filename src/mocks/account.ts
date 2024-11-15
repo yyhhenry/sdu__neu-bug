@@ -12,7 +12,7 @@ let mockUsers: UserInfo[] = [
     email: 'admin@example.com',
   },
   {
-    username: 'user',
+    username: 'user1',
     fullName: 'Json',
     role: 'user',
     email: 'user@example.com',
@@ -131,8 +131,7 @@ export const loginHandlers: RequestHandler[] = [
         msg: '用户名已存在',
       });
     }
-    // This may change the id of the user
-    mockUsers = [...mockUsers.filter((u) => u.username !== id), newInfo];
+    mockUsers = mockUsers.map((u) => (u.username === id ? newInfo : u));
     return HttpResponse.json({
       type: 'success',
       msg: '用户信息修改成功',

@@ -8,6 +8,7 @@ import {
 import { useCheckedStorage } from './storage';
 import { computed } from 'vue';
 import { GSnackbar } from './global-snackbar';
+import { isEmail } from 'validator';
 
 export const usernameRules = [
   (v: string) => v.length > 0 || '用户名不能为空',
@@ -19,6 +20,10 @@ export const passwordRules = [
   (v: string) =>
     /^[\x20-\x7E]+$/.test(v) || '密码只可以包含可见ASCII字符和空格',
   (v: string) => (v.length >= 6 && v.length <= 20) || '密码长度应在6-20之间',
+];
+export const emailRules = [
+  (v: string) => v.length > 0 || '邮箱不能为空',
+  (v: string) => isEmail(v) || '邮箱格式不正确',
 ];
 
 export const DMsgRes = struct({
