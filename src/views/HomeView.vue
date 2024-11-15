@@ -38,7 +38,7 @@ const onLogout = () => {
       </template>
     </v-app-bar>
     <v-navigation-drawer v-model="navDrawer">
-      <v-list v-model:selected="navSelected" mandatory>
+      <v-list v-model:selected="navSelected" mandatory open-strategy="single">
         <v-list-group>
           <template #activator="{ props }">
             <v-list-item
