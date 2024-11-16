@@ -196,13 +196,14 @@ const onAddUser = async () => {
               <th>全名</th>
               <th>角色</th>
               <th>邮箱</th>
-              <th class="d-flex align-center ga-1">
-                <span class="text-grey">操作</span>
+              <th>
                 <v-btn
                   color="error"
-                  icon="mdi-account-plus"
+                  prepend-icon="mdi-account-plus"
                   @click="addUserDialog = true"
-                ></v-btn>
+                >
+                  添加
+                </v-btn>
               </th>
             </tr>
           </thead>
