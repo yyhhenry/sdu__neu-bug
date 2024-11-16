@@ -52,7 +52,7 @@ const fetchUsers = async () => {
   const res = await wrapAsyncFn(searchUserApi)(req);
   res.match(
     (res) => {
-      users.value = res.users;
+      users.value = res;
     },
     (e) => GSnackbar.error(e.message),
   );

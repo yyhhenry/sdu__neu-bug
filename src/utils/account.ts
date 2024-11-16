@@ -253,7 +253,7 @@ export async function searchUserApi(req: SearchUserReq) {
   if (DMsgRes.guard(res)) {
     throw new Error(res.msg);
   }
-  return DSearchUserRes.validate(res).unwrap();
+  return DSearchUserRes.validate(res).unwrap().users;
 }
 
 /**
