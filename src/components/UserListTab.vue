@@ -5,6 +5,8 @@ import {
   editUserApi,
   emailRules,
   getPrivilegeNameOfRole,
+  passwordRules,
+  registerApi,
   searchUserApi,
   UserInfo,
   usernameRules,
@@ -103,6 +105,42 @@ const onDelete = async () => {
     (e) => GSnackbar.error(e.message),
   );
 };
+
+const addUserDialog = ref(false);
+const addUser = ref<SearchUser>({
+  username: '',
+  fullName: '',
+  role: '用户',
+  email: '',
+});
+const addUserPassword = ref('');
+const addUserConfirmDialog = ref(false);
+const onAddUserConfirm = () => {
+  if (
+    GSnackbar.accept(addUser.value.username, usernameRules) &&
+    GSnackbar.accept(addUserPassword.value, passwordRules) &&
+    GSnackbar.accept(addUser.value.email, emailRules)
+  ) {
+    addUserConfirmDialog.value = true;
+  }
+};
+const onAddUser = async () => {
+  const res = await wrapAsyncFn(registerApi)({
+    password: addUserPassword.value,
+    info: {
+      ...addUser.value,
+      role: DRole.validate(roleMap[addUser.value.role]).unwrapOr('user'),
+    },
+  });
+  res.match(
+    () => {
+      GSnackbar.success('添加用户成功');
+      usersRefreshCounter.refresh();
+      addUserDialog.value = false;
+    },
+    (e) => GSnackbar.error(e.message),
+  );
+};
 </script>
 <template>
   <v-breadcrumbs :items="[...breadcrumbs, '用户列表']"></v-breadcrumbs>
@@ -131,10 +169,12 @@ const onDelete = async () => {
               <v-text-field
                 v-model="searchUser.username"
                 label="用户名"
+                clearable
               ></v-text-field>
               <v-text-field
                 v-model="searchUser.fullName"
                 label="全名"
+                clearable
               ></v-text-field>
               <v-select
                 v-model="searchUser.role"
@@ -144,6 +184,7 @@ const onDelete = async () => {
               <v-text-field
                 v-model="searchUser.email"
                 label="邮箱"
+                clearable
               ></v-text-field>
             </v-expansion-panel-text>
           </v-expansion-panel>
@@ -155,7 +196,14 @@ const onDelete = async () => {
               <th>全名</th>
               <th>角色</th>
               <th>邮箱</th>
-              <th class="text-grey">操作</th>
+              <th class="d-flex align-center ga-1">
+                <span class="text-grey">操作</span>
+                <v-btn
+                  color="error"
+                  icon="mdi-account-plus"
+                  @click="addUserDialog = true"
+                ></v-btn>
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -167,7 +215,7 @@ const onDelete = async () => {
               <td>
                 <v-btn
                   variant="text"
-                  icon="mdi-square-edit-outline"
+                  icon="mdi-account-edit"
                   @click="
                     actionsTarget = user.username;
                     editDialog = true;
@@ -194,6 +242,79 @@ const onDelete = async () => {
       </v-card-text>
     </v-card>
   </v-container>
+  <v-dialog v-model="addUserDialog" :max-width="600">
+    <v-card>
+      <v-card-title>添加用户</v-card-title>
+      <v-card-text>
+        <v-text-field
+          v-model="addUser.username"
+          label="用户名"
+          :rules="usernameRules"
+          required
+        ></v-text-field>
+        <v-text-field
+          v-model="addUserPassword"
+          :rules="passwordRules"
+          label="密码"
+          type="password"
+          required
+        ></v-text-field>
+        <v-text-field
+          v-model="addUser.fullName"
+          label="全名"
+          required
+        ></v-text-field>
+        <v-select
+          v-model="addUser.role"
+          :items="['管理员', '用户']"
+          label="角色"
+          required
+        ></v-select>
+        <v-text-field
+          v-model="addUser.email"
+          :rules="emailRules"
+          label="邮箱"
+          required
+        ></v-text-field>
+      </v-card-text>
+      <v-card-actions>
+        <v-spacer></v-spacer>
+        <v-btn size="large" variant="text" @click="addUserDialog = false">
+          取消
+        </v-btn>
+        <v-btn
+          size="large"
+          variant="tonal"
+          color="error"
+          @click="onAddUserConfirm"
+        >
+          添加
+        </v-btn>
+      </v-card-actions>
+    </v-card>
+  </v-dialog>
+  <v-dialog v-model="addUserConfirmDialog" :max-width="450">
+    <v-card>
+      <v-card-title>添加用户 {{ addUser.username }}</v-card-title>
+      <v-card-text>确定添加用户吗？</v-card-text>
+      <v-card-actions>
+        <v-spacer></v-spacer>
+        <v-btn size="large" @click="addUserConfirmDialog = false">取消</v-btn>
+        <v-btn
+          size="large"
+          variant="tonal"
+          color="error"
+          @click="
+            addUserConfirmDialog = false;
+            onAddUser();
+          "
+        >
+          确定
+        </v-btn>
+      </v-card-actions>
+    </v-card>
+  </v-dialog>
+
   <v-dialog v-model="editDialog" :max-width="600">
     <v-card>
       <v-card-title>编辑用户 {{ actionsTarget }}</v-card-title>
