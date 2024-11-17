@@ -44,7 +44,7 @@ export const mockModules: MockModules[] = [
           {
             name: '导航栏',
             devHours: 2,
-            devUsername: 'userC1',
+            devUsername: 'student',
           },
           {
             name: '广告栏',
@@ -139,12 +139,13 @@ export const projectHandlers: RequestHandler[] = [
         msg: '找不到项目',
       });
     }
+    const { numDevelopers, numFeatures, numIssues } = mockProjects[index];
     mockProjects[index] = {
       key,
       ...newProject,
-      numDevelopers: mockProjects[index].numDevelopers,
-      numFeatures: mockProjects[index].numFeatures,
-      numIssues: mockProjects[index].numIssues,
+      numDevelopers,
+      numFeatures,
+      numIssues,
     };
     return HttpResponse.json(mockProjects[index]);
   }),
@@ -174,6 +175,20 @@ export const projectHandlers: RequestHandler[] = [
       projectKey: key,
       modules: newModules.modules,
     };
+    const setDevelopers = new Set<string>();
+    let numFeatures = 0;
+    for (const module of newModules.modules) {
+      for (const feature of module.features) {
+        setDevelopers.add(feature.devUsername);
+        numFeatures++;
+      }
+    }
+    setDevelopers.delete('');
+    const projectIndex = mockProjects.findIndex((p) => p.key === key);
+    if (projectIndex !== -1) {
+      mockProjects[projectIndex].numDevelopers = setDevelopers.size;
+      mockProjects[projectIndex].numFeatures = numFeatures;
+    }
     return HttpResponse.json({
       type: 'success',
       msg: '更新成功',

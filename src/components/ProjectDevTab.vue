@@ -39,7 +39,10 @@ const modulesTab = ref(false);
     v-if="modulesTab"
     :breadcrumbs="[...breadcrumbs, '项目列表']"
     :project-key="actionsTarget"
-    @close="modulesTab = false"
+    @close="
+      modulesTab = false;
+      projectsRefreshCounter.refresh();
+    "
   />
   <v-container class="d-flex justify-center" v-if="!modulesTab">
     <v-card width="min(1000px, 100%)" class="ma-5">
@@ -89,14 +92,21 @@ const modulesTab = ref(false);
               <td>{{ project.numFeatures }}</td>
               <td>{{ project.numDevelopers }}</td>
               <td>
-                <v-btn
-                  variant="text"
-                  icon="mdi-package-variant"
-                  @click="
-                    modulesTab = true;
-                    actionsTarget = project.key;
-                  "
-                ></v-btn>
+                <v-tooltip>
+                  <template #activator="{ props }">
+                    <v-btn
+                      v-bind="props"
+                      icon
+                      @click="
+                        actionsTarget = project.key;
+                        modulesTab = true;
+                      "
+                    >
+                      <v-icon>mdi-calendar-check</v-icon>
+                    </v-btn>
+                  </template>
+                  按模块进行任务分配
+                </v-tooltip>
               </td>
             </tr>
           </tbody>

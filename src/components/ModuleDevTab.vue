@@ -83,7 +83,7 @@ watch(dirty, () => {
 });
 </script>
 <template>
-  <v-breadcrumbs :items="[...breadcrumbs, '模块管理']"></v-breadcrumbs>
+  <v-breadcrumbs :items="[...breadcrumbs, '任务分配']"></v-breadcrumbs>
   <v-container class="d-flex justify-center">
     <v-card width="min(1000px, 1000%)">
       <v-card-title>
@@ -95,8 +95,8 @@ watch(dirty, () => {
             @click="$emit('close')"
           >
           </v-btn>
-          <v-icon>mdi-package-variant</v-icon>
-          模块管理
+          <v-icon>mdi-calendar-check</v-icon>
+          任务分配
           {{ projectKey }}
         </div>
       </v-card-title>

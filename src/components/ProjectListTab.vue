@@ -115,7 +115,10 @@ const modulesTab = ref(false);
     v-if="modulesTab"
     :breadcrumbs="[...breadcrumbs, '项目列表']"
     :project-key="actionsTarget"
-    @close="modulesTab = false"
+    @close="
+      modulesTab = false;
+      projectsRefreshCounter.refresh();
+    "
   />
   <v-container class="d-flex justify-center" v-if="!modulesTab">
     <v-card width="min(1000px, 100%)" class="ma-5">
