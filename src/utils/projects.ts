@@ -7,7 +7,6 @@ export const DProjectInfo = struct({
   description: DString,
   date: DString, // YYYY-MM-DD
   ownerUsername: DString,
-  ownerFullName: DString,
   numIssues: DNumber,
   numFeatures: DNumber,
   numDevelopers: DNumber,
@@ -88,7 +87,6 @@ export const DFeatureInfo = struct({
   name: DString,
   devHours: DNumber,
   devUsername: DString,
-  devFullName: DString,
 });
 export const DModuleInfo = struct({
   name: DString,
@@ -108,4 +106,27 @@ export async function getModulesApi(projectKey: string) {
     throw new Error(res.msg);
   }
   return DModuleList.validate(res).unwrap().modules;
+}
+
+export async function updateModulesApi(
+  projectKey: string,
+  modules: ModuleInfo[],
+) {
+  const url = new URL(
+    `/api/project/${projectKey}/modules`,
+    window.location.origin,
+  );
+  const res: unknown = await fetch(url, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(await getAuthHeader()),
+    },
+    body: JSON.stringify({ modules }),
+  }).then((res) => res.json());
+  const msgRes = DMsgRes.validate(res).unwrap();
+  if (msgRes.type === 'error') {
+    throw new Error(msgRes.msg);
+  }
+  return msgRes.msg;
 }

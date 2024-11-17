@@ -173,7 +173,7 @@ const modulesTab = ref(false);
               <td>{{ project.name }}</td>
               <td>{{ project.description }}</td>
               <td>{{ project.date }}</td>
-              <td>{{ project.ownerFullName }}</td>
+              <td>{{ project.ownerUsername }}</td>
               <td>
                 <v-btn
                   variant="text"

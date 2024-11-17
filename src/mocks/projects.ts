@@ -1,7 +1,11 @@
-import { DCreateProjectReq, DModuleInfo, ProjectInfo } from '@/utils/projects';
+import {
+  DCreateProjectReq,
+  DModuleInfo,
+  DModuleList,
+  ProjectInfo,
+} from '@/utils/projects';
 import { DString, InferType, struct } from '@yyhhenry/type-guard-map';
 import { http, HttpResponse, RequestHandler } from 'msw';
-import { mockUsers } from './account';
 
 export const mockProjects: ProjectInfo[] = [
   {
@@ -9,10 +13,9 @@ export const mockProjects: ProjectInfo[] = [
     name: '个人博客系统',
     description: '用于个人博客的系统',
     ownerUsername: 'admin',
-    ownerFullName: '管理员',
     date: '2016-07-25',
-    numDevelopers: 0,
-    numFeatures: 0,
+    numDevelopers: 2,
+    numFeatures: 2,
     numIssues: 0,
   },
   {
@@ -20,10 +23,9 @@ export const mockProjects: ProjectInfo[] = [
     name: '用户管理系统',
     description: '用于用户管理的系统',
     ownerUsername: 'userC1',
-    ownerFullName: '白鹭',
     date: '2016-07-25',
-    numDevelopers: 0,
-    numFeatures: 0,
+    numDevelopers: 1,
+    numFeatures: 2,
     numIssues: 0,
   },
 ];
@@ -42,13 +44,11 @@ export const mockModules: MockModules[] = [
           {
             name: '导航栏',
             devHours: 2,
-            devFullName: '白鹭',
             devUsername: 'userC1',
           },
           {
             name: '广告栏',
             devHours: 1,
-            devFullName: '白鹭',
             devUsername: 'userC1',
           },
         ],
@@ -68,13 +68,11 @@ export const mockModules: MockModules[] = [
           {
             name: '用户列表',
             devHours: 3,
-            devFullName: '白鹭',
             devUsername: 'userC1',
           },
           {
             name: '用户详情',
             devHours: 2,
-            devFullName: '白鹭',
             devUsername: 'userC1',
           },
         ],
@@ -106,19 +104,9 @@ export const projectHandlers: RequestHandler[] = [
     const key = DString.validate(req.params.key).unwrap();
     const reqBody = await req.request.json();
     const newProject = DCreateProjectReq.validate(reqBody).unwrap();
-    const ownerFullName = mockUsers.find(
-      (u) => u.username === newProject.ownerUsername,
-    )?.fullName;
-    if (!ownerFullName) {
-      return HttpResponse.json({
-        type: 'error',
-        msg: '找不到负责人',
-      });
-    }
     mockProjects.push({
       key,
       ...newProject,
-      ownerFullName,
       numDevelopers: 0,
       numFeatures: 0,
       numIssues: 0,
@@ -144,15 +132,6 @@ export const projectHandlers: RequestHandler[] = [
     const key = DString.validate(req.params.key).unwrap();
     const reqBody = await req.request.json();
     const newProject = DCreateProjectReq.validate(reqBody).unwrap();
-    const ownerFullName = mockUsers.find(
-      (u) => u.username === newProject.ownerUsername,
-    )?.fullName;
-    if (!ownerFullName) {
-      return HttpResponse.json({
-        type: 'error',
-        msg: '找不到负责人',
-      });
-    }
     const index = mockProjects.findIndex((p) => p.key === key);
     if (index === -1) {
       return HttpResponse.json({
@@ -163,7 +142,6 @@ export const projectHandlers: RequestHandler[] = [
     mockProjects[index] = {
       key,
       ...newProject,
-      ownerFullName,
       numDevelopers: mockProjects[index].numDevelopers,
       numFeatures: mockProjects[index].numFeatures,
       numIssues: mockProjects[index].numIssues,
@@ -180,5 +158,25 @@ export const projectHandlers: RequestHandler[] = [
       });
     }
     return HttpResponse.json(modules);
+  }),
+  http.put('/api/project/:key/modules', async (req) => {
+    const key = DString.validate(req.params.key).unwrap();
+    const reqBody = await req.request.json();
+    const newModules = DModuleList.validate(reqBody).unwrap();
+    const index = mockModules.findIndex((m) => m.projectKey === key);
+    if (index === -1) {
+      return HttpResponse.json({
+        type: 'error',
+        msg: '找不到项目',
+      });
+    }
+    mockModules[index] = {
+      projectKey: key,
+      modules: newModules.modules,
+    };
+    return HttpResponse.json({
+      type: 'success',
+      msg: '更新成功',
+    });
   }),
 ];
