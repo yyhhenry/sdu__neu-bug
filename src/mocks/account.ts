@@ -4,7 +4,7 @@ import { http, HttpResponse, RequestHandler } from 'msw';
 
 const expireTime = 1000 * 60 * 5;
 
-let mockUsers: UserInfo[] = [
+export const mockUsers: UserInfo[] = [
   {
     username: 'admin',
     fullName: '管理员',
@@ -43,7 +43,7 @@ let mockUsers: UserInfo[] = [
   },
 ];
 
-export const loginHandlers: RequestHandler[] = [
+export const accountHandlers: RequestHandler[] = [
   http.post('/api/login', async (req) => {
     const reqBody = await req.request.json();
     const DLoginReq = struct({
@@ -131,7 +131,8 @@ export const loginHandlers: RequestHandler[] = [
         msg: '用户名已存在',
       });
     }
-    mockUsers = mockUsers.map((u) => (u.username === id ? newInfo : u));
+    const index = mockUsers.findIndex((u) => u.username === id);
+    mockUsers[index] = newInfo;
     return HttpResponse.json({
       type: 'success',
       msg: '用户信息修改成功',
@@ -163,7 +164,8 @@ export const loginHandlers: RequestHandler[] = [
         msg: '用户不存在',
       });
     }
-    mockUsers = mockUsers.filter((u) => u.username !== id);
+    const index = mockUsers.findIndex((u) => u.username === id);
+    mockUsers.splice(index, 1);
     return HttpResponse.json({
       type: 'success',
       msg: '用户删除成功',

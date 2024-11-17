@@ -32,6 +32,55 @@ export async function getProjectListApi(searchName?: string) {
   }
   return DProjectList.validate(res).unwrap().projects;
 }
+export const DCreateProjectReq = struct({
+  name: DString,
+  description: DString,
+  date: DString,
+  ownerUsername: DString,
+});
+export type CreateProjectReq = InferType<typeof DCreateProjectReq>;
+export async function createProjectApi(key: string, req: CreateProjectReq) {
+  const url = new URL(`/api/project/${key}`, window.location.origin);
+  const res: unknown = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(await getAuthHeader()),
+    },
+    body: JSON.stringify(req),
+  }).then((res) => res.json());
+  if (DMsgRes.guard(res)) {
+    throw new Error(res.msg);
+  }
+  return DProjectInfo.validate(res).unwrap();
+}
+export async function deleteProjectApi(key: string) {
+  const url = new URL(`/api/project/${key}`, window.location.origin);
+  const res: unknown = await fetch(url, {
+    method: 'DELETE',
+    headers: {
+      ...(await getAuthHeader()),
+    },
+  }).then((res) => res.json());
+  if (DMsgRes.guard(res)) {
+    throw new Error(res.msg);
+  }
+}
+export async function updateProjectApi(key: string, req: CreateProjectReq) {
+  const url = new URL(`/api/project/${key}`, window.location.origin);
+  const res: unknown = await fetch(url, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(await getAuthHeader()),
+    },
+    body: JSON.stringify(req),
+  }).then((res) => res.json());
+  if (DMsgRes.guard(res)) {
+    throw new Error(res.msg);
+  }
+  return DProjectInfo.validate(res).unwrap();
+}
 
 export const DFeatureInfo = struct({
   name: DString,
