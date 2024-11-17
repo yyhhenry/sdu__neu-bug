@@ -1,5 +1,5 @@
-import { DCreateProjectReq, ProjectInfo } from '@/utils/projects';
-import { DString } from '@yyhhenry/type-guard-map';
+import { DCreateProjectReq, DModuleInfo, ProjectInfo } from '@/utils/projects';
+import { DString, InferType, struct } from '@yyhhenry/type-guard-map';
 import { http, HttpResponse, RequestHandler } from 'msw';
 import { mockUsers } from './account';
 
@@ -27,14 +27,75 @@ export const mockProjects: ProjectInfo[] = [
     numIssues: 0,
   },
 ];
+export const DMockModules = struct({
+  projectKey: DString,
+  modules: DModuleInfo.arr(),
+});
+export type MockModules = InferType<typeof DMockModules>;
+export const mockModules: MockModules[] = [
+  {
+    projectKey: 'blog',
+    modules: [
+      {
+        name: '首页',
+        features: [
+          {
+            name: '导航栏',
+            devHours: 2,
+            devFullName: '白鹭',
+            devUsername: 'userC1',
+          },
+          {
+            name: '广告栏',
+            devHours: 1,
+            devFullName: '白鹭',
+            devUsername: 'userC1',
+          },
+        ],
+      },
+      {
+        name: '登录',
+        features: [],
+      },
+    ],
+  },
+  {
+    projectKey: 'user',
+    modules: [
+      {
+        name: '用户管理',
+        features: [
+          {
+            name: '用户列表',
+            devHours: 3,
+            devFullName: '白鹭',
+            devUsername: 'userC1',
+          },
+          {
+            name: '用户详情',
+            devHours: 2,
+            devFullName: '白鹭',
+            devUsername: 'userC1',
+          },
+        ],
+      },
+      {
+        name: '角色管理',
+        features: [],
+      },
+    ],
+  },
+];
 
 export const projectHandlers: RequestHandler[] = [
   http.get('/api/search-project', async (req) => {
     const url = new URL(req.request.url, 'http://localhost');
     const searchName = url.searchParams.get('name');
     const projects = searchName
-      ? mockProjects.filter((p) =>
-          p.name.toLowerCase().includes(searchName.toLowerCase()),
+      ? mockProjects.filter(
+          (p) =>
+            p.name.toLowerCase().includes(searchName.toLowerCase()) ||
+            p.key.toLowerCase().includes(searchName.toLowerCase()),
         )
       : mockProjects;
     return HttpResponse.json({
@@ -108,5 +169,16 @@ export const projectHandlers: RequestHandler[] = [
       numIssues: mockProjects[index].numIssues,
     };
     return HttpResponse.json(mockProjects[index]);
+  }),
+  http.get('/api/project/:key/modules', async (req) => {
+    const key = DString.validate(req.params.key).unwrap();
+    const modules = mockModules.find((m) => m.projectKey === key);
+    if (!modules) {
+      return HttpResponse.json({
+        type: 'error',
+        msg: '找不到项目',
+      });
+    }
+    return HttpResponse.json(modules);
   }),
 ];

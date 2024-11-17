@@ -152,6 +152,10 @@ const onLogout = () => {
         v-else-if="navSelected[0] === '用户管理'"
         :breadcrumbs="['用户管理']"
       />
+      <ProjectListTab
+        v-else-if="navSelected[0] === '项目管理'"
+        :breadcrumbs="['项目管理']"
+      ></ProjectListTab>
       <v-container v-else>
         <p>{{ navSelected[0] }} 尚未开发</p>
       </v-container>

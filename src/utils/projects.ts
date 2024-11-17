@@ -17,7 +17,7 @@ export type ProjectInfo = InferType<typeof DProjectInfo>;
 export const DProjectList = struct({
   projects: DProjectInfo.arr(),
 });
-export async function getProjectListApi(searchName?: string) {
+export async function searchProjectsApi(searchName?: string) {
   const url = new URL('/api/search-project', window.location.origin);
   if (searchName) {
     url.searchParams.set('name', searchName);
@@ -62,9 +62,11 @@ export async function deleteProjectApi(key: string) {
       ...(await getAuthHeader()),
     },
   }).then((res) => res.json());
-  if (DMsgRes.guard(res)) {
-    throw new Error(res.msg);
+  const msgRes = DMsgRes.validate(res).unwrap();
+  if (msgRes.type === 'error') {
+    throw new Error(msgRes.msg);
   }
+  return msgRes.msg;
 }
 export async function updateProjectApi(key: string, req: CreateProjectReq) {
   const url = new URL(`/api/project/${key}`, window.location.origin);
@@ -92,6 +94,7 @@ export const DModuleInfo = struct({
   name: DString,
   features: DFeatureInfo.arr(),
 });
+export type ModuleInfo = InferType<typeof DModuleInfo>;
 export const DModuleList = struct({
   modules: DModuleInfo.arr(),
 });

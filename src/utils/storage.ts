@@ -19,6 +19,6 @@ export function useCheckedStorage<T>(
 export function useRefreshCounter() {
   const counter = ref(0);
   const refresh = () => (counter.value += 1);
-  const require = () => counter.value;
-  return { counter, refresh, touch: require };
+  const touch = () => counter.value;
+  return { counter, refresh, touch };
 }
