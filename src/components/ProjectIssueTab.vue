@@ -38,6 +38,11 @@ const issueTab = ref<'issue' | 'report'>();
     v-if="issueTab === undefined"
     :items="[...breadcrumbs, '项目列表']"
   />
+  <IssueListTab
+    v-if="issueTab === 'issue'"
+    :projectKey="actionsTarget"
+    :breadcrumbs="[...breadcrumbs, '项目列表']"
+  ></IssueListTab>
   <v-container class="d-flex justify-center" v-if="issueTab === undefined">
     <v-card width="min(1000px, 100%)" class="ma-5">
       <v-card-title>

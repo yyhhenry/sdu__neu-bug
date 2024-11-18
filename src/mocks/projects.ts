@@ -1,18 +1,11 @@
 import {
   DCreateProjectReq,
   DIssueInfo,
-  DIssueList,
   DModuleInfo,
   DModuleList,
   ProjectInfo,
 } from '@/utils/projects';
-import { fin } from '@yyhhenry/rust-result';
-import {
-  DString,
-  InferType,
-  leafExpect,
-  struct,
-} from '@yyhhenry/type-guard-map';
+import { DString, InferType, struct } from '@yyhhenry/type-guard-map';
 import { http, HttpResponse, RequestHandler } from 'msw';
 
 export const mockProjects: ProjectInfo[] = [
@@ -273,40 +266,114 @@ export const projectHandlers: RequestHandler[] = [
         msg: '找不到项目',
       });
     }
-    let result = issueList.issues;
+    let issues = issueList.issues;
+
+    // Define fields that require exact matching
+    const exactMatchFields = ['level', 'status', 'tag'];
+
     url.searchParams.forEach((value, key) => {
-      const checker = struct({
-        [key]: DString.cond((v) => {
-          if (v.toLowerCase().includes(value.toLowerCase())) {
-            return fin();
-          }
-          return leafExpect(value, v);
-        }),
+      issues = issues.filter((issue) => {
+        const issueValue = issue[key as keyof typeof issue];
+        if (exactMatchFields.includes(key)) {
+          // Exact match for level, status, and tag
+          return issueValue === value;
+        } else {
+          // Contains match for other string fields
+          return (
+            typeof issueValue === 'string' &&
+            issueValue.toLowerCase().includes(value.toLowerCase())
+          );
+        }
       });
-      result = result.filter((issue) => checker.guard(issue));
     });
-    return HttpResponse.json(result);
+
+    return HttpResponse.json({ issues });
   }),
-  http.put('/api/project/:key/issue', async (req) => {
+  http.post('/api/project/:key/issue', async (req) => {
     const key = DString.validate(req.params.key).unwrap();
     const reqBody = await req.request.json();
-    const newIssue = DIssueList.validate(reqBody).unwrap();
+    const newIssue = DIssueInfo.validate(reqBody).unwrap();
+
     const index = mockIssues.findIndex((i) => i.projectKey === key);
+
+    // Generate new ID
+    const projectIssues = index === -1 ? [] : mockIssues[index].issues;
+    const maxId = Math.max(0, ...projectIssues.map((i) => parseInt(i.id) || 0));
+    newIssue.id = (maxId + 1).toString();
+
     if (index === -1) {
+      mockIssues.push({
+        projectKey: key,
+        issues: [newIssue],
+      });
+    } else {
+      mockIssues[index].issues.push(newIssue);
+    }
+
+    const projectIndex = mockProjects.findIndex((p) => p.key === key);
+    if (projectIndex !== -1) {
+      mockProjects[projectIndex].numIssues++;
+    }
+
+    return HttpResponse.json({
+      type: 'success',
+      msg: '创建成功',
+    });
+  }),
+  http.delete('/api/project/:key/issue/:id', async (req) => {
+    const key = DString.validate(req.params.key).unwrap();
+    const id = DString.validate(req.params.id).unwrap();
+
+    const projectIssues = mockIssues.find((i) => i.projectKey === key);
+    if (!projectIssues) {
       return HttpResponse.json({
         type: 'error',
         msg: '找不到项目',
       });
     }
-    mockIssues[index] = {
-      projectKey: key,
-      issues: newIssue.issues,
-    };
-    mockProjects
-      .filter((p) => p.key === key)
-      .forEach((p) => {
-        p.numIssues = newIssue.issues.length;
+
+    const issueIndex = projectIssues.issues.findIndex((i) => i.id === id);
+    if (issueIndex === -1) {
+      return HttpResponse.json({
+        type: 'error',
+        msg: '找不到问题',
       });
+    }
+
+    projectIssues.issues.splice(issueIndex, 1);
+    const projectIndex = mockProjects.findIndex((p) => p.key === key);
+    if (projectIndex !== -1) {
+      mockProjects[projectIndex].numIssues--;
+    }
+
+    return HttpResponse.json({
+      type: 'success',
+      msg: '删除成功',
+    });
+  }),
+  http.put('/api/project/:key/issue/:id', async (req) => {
+    const key = DString.validate(req.params.key).unwrap();
+    const id = DString.validate(req.params.id).unwrap();
+    const reqBody = await req.request.json();
+    const updatedIssue = DIssueInfo.validate(reqBody).unwrap();
+
+    const projectIssues = mockIssues.find((i) => i.projectKey === key);
+    if (!projectIssues) {
+      return HttpResponse.json({
+        type: 'error',
+        msg: '找不到项目',
+      });
+    }
+
+    const issueIndex = projectIssues.issues.findIndex((i) => i.id === id);
+    if (issueIndex === -1) {
+      return HttpResponse.json({
+        type: 'error',
+        msg: '找不到问题',
+      });
+    }
+
+    projectIssues.issues[issueIndex] = updatedIssue;
     return HttpResponse.json({
       type: 'success',
       msg: '更新成功',

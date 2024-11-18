@@ -136,16 +136,24 @@ export async function updateModulesApi(
   }
   return msgRes.msg;
 }
-
-export const DIssueLevel = literal('轻微', '次要', '一般', '紧急', '严重');
-export const DIssueStatus = literal('开放中', '已关闭', '已解决');
-export const DIssueTag = literal(
+export const issueLevelLiterals = [
+  '轻微',
+  '次要',
+  '一般',
+  '紧急',
+  '严重',
+] as const;
+export const DIssueLevel = literal(...issueLevelLiterals);
+export const issueStatusLiterals = ['开放中', '已关闭', '已解决'] as const;
+export const DIssueStatus = literal(...issueStatusLiterals);
+export const issueTagLiterals = [
   '未解决',
   '已解决',
   '不是错误',
   '无法重现',
   '重复',
-);
+] as const;
+export const DIssueTag = literal(...issueTagLiterals);
 export const DIssueInfo = struct({
   id: DString,
   moduleName: DString,
@@ -169,11 +177,11 @@ export const DSearchIssueReq = struct({
   title: DString.opt(),
   moduleName: DString.opt(),
   featureName: DString.opt(),
-  level: DIssueLevel.opt(),
+  level: DIssueLevel.opt().or(literal('')),
   creatorUsername: DString.opt(),
   devUsername: DString.opt(),
-  status: DIssueStatus.opt(),
-  tag: DIssueTag.opt(),
+  status: DIssueStatus.opt().or(literal('')),
+  tag: DIssueTag.opt().or(literal('')),
 });
 export type SearchIssueReq = InferType<typeof DSearchIssueReq>;
 export async function getIssuesApi(
@@ -201,9 +209,49 @@ export async function getIssuesApi(
   }
   return DIssueList.validate(res).unwrap().issues;
 }
-export async function updateIssuesApi(projectKey: string, issues: IssueInfo[]) {
+export async function createIssueApi(projectKey: string, issue: IssueInfo) {
   const url = new URL(
     `/api/project/${projectKey}/issue`,
+    window.location.origin,
+  );
+  const res: unknown = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(await getAuthHeader()),
+    },
+    body: JSON.stringify(issue),
+  }).then((res) => res.json());
+  const msgRes = DMsgRes.validate(res).unwrap();
+  if (msgRes.type === 'error') {
+    throw new Error(msgRes.msg);
+  }
+  return msgRes.msg;
+}
+export async function deleteIssueApi(projectKey: string, issueId: string) {
+  const url = new URL(
+    `/api/project/${projectKey}/issue/${issueId}`,
+    window.location.origin,
+  );
+  const res: unknown = await fetch(url, {
+    method: 'DELETE',
+    headers: {
+      ...(await getAuthHeader()),
+    },
+  }).then((res) => res.json());
+  const msgRes = DMsgRes.validate(res).unwrap();
+  if (msgRes.type === 'error') {
+    throw new Error(msgRes.msg);
+  }
+  return msgRes.msg;
+}
+export async function updateIssueApi(
+  projectKey: string,
+  issueId: string,
+  issue: IssueInfo,
+) {
+  const url = new URL(
+    `/api/project/${projectKey}/issue/${issueId}`,
     window.location.origin,
   );
   const res: unknown = await fetch(url, {
@@ -212,7 +260,7 @@ export async function updateIssuesApi(projectKey: string, issues: IssueInfo[]) {
       'Content-Type': 'application/json',
       ...(await getAuthHeader()),
     },
-    body: JSON.stringify({ issues }),
+    body: JSON.stringify(issue),
   }).then((res) => res.json());
   const msgRes = DMsgRes.validate(res).unwrap();
   if (msgRes.type === 'error') {
