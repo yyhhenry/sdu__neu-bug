@@ -31,20 +31,14 @@ watch(searchProjectKey, debouncedFetchProjects);
 
 const actionsTarget = ref('');
 
-const modulesTab = ref(false);
+const issueTab = ref<'issue' | 'report'>();
 </script>
 <template>
-  <v-breadcrumbs v-if="!modulesTab" :items="[...breadcrumbs, '项目列表']" />
-  <ModuleDevTab
-    v-if="modulesTab"
-    :breadcrumbs="[...breadcrumbs, '项目列表']"
-    :project-key="actionsTarget"
-    @close="
-      modulesTab = false;
-      projectsRefreshCounter.refresh();
-    "
+  <v-breadcrumbs
+    v-if="issueTab === undefined"
+    :items="[...breadcrumbs, '项目列表']"
   />
-  <v-container class="d-flex justify-center" v-if="!modulesTab">
+  <v-container class="d-flex justify-center" v-if="issueTab === undefined">
     <v-card width="min(1000px, 100%)" class="ma-5">
       <v-card-title>
         <div class="d-flex align-center ga-3">
@@ -80,8 +74,7 @@ const modulesTab = ref(false);
             <tr>
               <th>项目名</th>
               <th>创建者</th>
-              <th>功能数</th>
-              <th>开发人数</th>
+              <th>Issue数量</th>
               <th class="text-grey">操作</th>
             </tr>
           </thead>
@@ -89,22 +82,35 @@ const modulesTab = ref(false);
             <tr v-for="project in projects" :key="project.key">
               <td>{{ project.name }}</td>
               <td>{{ project.ownerUsername }}</td>
-              <td>{{ project.numFeatures }}</td>
-              <td>{{ project.numDevelopers }}</td>
+              <td>{{ project.numIssues }}</td>
               <td>
-                <v-tooltip>
+                <v-tooltip location="start">
                   <template #activator="{ props }">
                     <v-btn
                       v-bind="props"
-                      icon="mdi-calendar-check"
+                      icon="mdi-bug-check-outline"
                       @click="
                         actionsTarget = project.key;
-                        modulesTab = true;
+                        issueTab = 'issue';
                       "
                     >
                     </v-btn>
                   </template>
-                  按模块进行任务分配
+                  查看issue列表
+                </v-tooltip>
+                <v-tooltip>
+                  <template #activator="{ props }">
+                    <v-btn
+                      v-bind="props"
+                      icon="mdi-chart-arc"
+                      @click="
+                        actionsTarget = project.key;
+                        issueTab = 'report';
+                      "
+                    >
+                    </v-btn>
+                  </template>
+                  查看issue报告
                 </v-tooltip>
               </td>
             </tr>

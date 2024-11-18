@@ -1,4 +1,10 @@
-import { DNumber, DString, InferType, struct } from '@yyhhenry/type-guard-map';
+import {
+  DNumber,
+  DString,
+  InferType,
+  literal,
+  struct,
+} from '@yyhhenry/type-guard-map';
 import { DMsgRes, getAuthHeader } from './account';
 
 export const DProjectInfo = struct({
@@ -123,6 +129,90 @@ export async function updateModulesApi(
       ...(await getAuthHeader()),
     },
     body: JSON.stringify({ modules }),
+  }).then((res) => res.json());
+  const msgRes = DMsgRes.validate(res).unwrap();
+  if (msgRes.type === 'error') {
+    throw new Error(msgRes.msg);
+  }
+  return msgRes.msg;
+}
+
+export const DIssueLevel = literal('轻微', '次要', '一般', '紧急', '严重');
+export const DIssueStatus = literal('开放中', '已关闭', '已解决');
+export const DIssueTag = literal(
+  '未解决',
+  '已解决',
+  '不是错误',
+  '无法重现',
+  '重复',
+);
+export const DIssueInfo = struct({
+  id: DString,
+  moduleName: DString,
+  featureName: DString,
+  title: DString,
+  description: DString,
+  level: DIssueLevel,
+  creatorUsername: DString,
+  devUsername: DString.opt(),
+  createTime: DString,
+  solveTime: DString.opt(),
+  status: DIssueStatus,
+  tag: DIssueTag.opt(),
+  feedback: DString.opt(),
+});
+export type IssueInfo = InferType<typeof DIssueInfo>;
+export const DIssueList = struct({
+  issues: DIssueInfo.arr(),
+});
+export const DSearchIssueReq = struct({
+  title: DString.opt(),
+  moduleName: DString.opt(),
+  featureName: DString.opt(),
+  level: DIssueLevel.opt(),
+  creatorUsername: DString.opt(),
+  devUsername: DString.opt(),
+  status: DIssueStatus.opt(),
+  tag: DIssueTag.opt(),
+});
+export type SearchIssueReq = InferType<typeof DSearchIssueReq>;
+export async function getIssuesApi(
+  projectKey: string,
+  searchReq?: SearchIssueReq,
+) {
+  const url = new URL(
+    `/api/project/${projectKey}/issue`,
+    window.location.origin,
+  );
+  if (searchReq) {
+    for (const [key, value] of Object.entries(searchReq)) {
+      if (value) {
+        url.searchParams.set(key, value);
+      }
+    }
+  }
+  const res: unknown = await fetch(url, {
+    headers: {
+      ...(await getAuthHeader()),
+    },
+  }).then((res) => res.json());
+  if (DMsgRes.guard(res)) {
+    throw new Error(res.msg);
+  }
+  return DIssueList.validate(res).unwrap().issues;
+}
+export async function updateIssuesApi(projectKey: string, issues: IssueInfo[]) {
+  const url = new URL(
+    `/api/project/${projectKey}/issue`,
+    window.location.origin,
+  );
+  const res: unknown = await fetch(url, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(await getAuthHeader()),
+    },
+    body: JSON.stringify({ issues }),
   }).then((res) => res.json());
   const msgRes = DMsgRes.validate(res).unwrap();
   if (msgRes.type === 'error') {

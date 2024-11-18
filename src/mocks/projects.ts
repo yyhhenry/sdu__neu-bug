@@ -1,10 +1,18 @@
 import {
   DCreateProjectReq,
+  DIssueInfo,
+  DIssueList,
   DModuleInfo,
   DModuleList,
   ProjectInfo,
 } from '@/utils/projects';
-import { DString, InferType, struct } from '@yyhhenry/type-guard-map';
+import { fin } from '@yyhhenry/rust-result';
+import {
+  DString,
+  InferType,
+  leafExpect,
+  struct,
+} from '@yyhhenry/type-guard-map';
 import { http, HttpResponse, RequestHandler } from 'msw';
 
 export const mockProjects: ProjectInfo[] = [
@@ -16,7 +24,7 @@ export const mockProjects: ProjectInfo[] = [
     date: '2016-07-25',
     numDevelopers: 2,
     numFeatures: 2,
-    numIssues: 0,
+    numIssues: 2,
   },
   {
     key: 'user',
@@ -26,7 +34,7 @@ export const mockProjects: ProjectInfo[] = [
     date: '2016-07-25',
     numDevelopers: 1,
     numFeatures: 2,
-    numIssues: 0,
+    numIssues: 1,
   },
 ];
 export const DMockModules = struct({
@@ -84,7 +92,68 @@ export const mockModules: MockModules[] = [
     ],
   },
 ];
-
+export const DMockIssues = struct({
+  projectKey: DString,
+  issues: DIssueInfo.arr(),
+});
+export type MockIssues = InferType<typeof DMockIssues>;
+export const mockIssues: MockIssues[] = [
+  {
+    projectKey: 'blog',
+    issues: [
+      {
+        id: '1',
+        title: '广告栏显示不正常',
+        description: '广告栏显示不正常，需要调整',
+        moduleName: '首页',
+        featureName: '广告栏',
+        level: '轻微',
+        status: '已解决',
+        createTime: '2021-07-25 12:20:01',
+        creatorUsername: 'userC1',
+        solveTime: '2021-07-25 12:24:33',
+        devUsername: 'student',
+        tag: '已解决',
+        feedback: '已调整',
+      },
+      {
+        id: '2',
+        title: '导航栏链接错误',
+        description: '导航栏链接错误，需要修复',
+        moduleName: '首页',
+        featureName: '导航栏',
+        level: '次要',
+        status: '开放中',
+        createTime: '2024-07-25 12:20:01',
+        creatorUsername: 'userC1',
+        tag: '无法重现',
+        devUsername: undefined,
+        solveTime: undefined,
+        feedback: '无法重现，等待测试给出详细的重现步骤',
+      },
+    ],
+  },
+  {
+    projectKey: 'user',
+    issues: [
+      {
+        id: '1',
+        title: '用户列表无法显示',
+        description: '用户列表无法显示，原因不明',
+        moduleName: '用户管理',
+        featureName: '用户列表',
+        level: '一般',
+        status: '已关闭',
+        createTime: '2021-07-25 21:00:30',
+        creatorUsername: 'student',
+        tag: '不是错误',
+        devUsername: undefined,
+        solveTime: undefined,
+        feedback: '测试人员未使用正确的账号',
+      },
+    ],
+  },
+];
 export const projectHandlers: RequestHandler[] = [
   http.get('/api/search-project', async (req) => {
     const url = new URL(req.request.url, 'http://localhost');
@@ -189,6 +258,55 @@ export const projectHandlers: RequestHandler[] = [
       mockProjects[projectIndex].numDevelopers = setDevelopers.size;
       mockProjects[projectIndex].numFeatures = numFeatures;
     }
+    return HttpResponse.json({
+      type: 'success',
+      msg: '更新成功',
+    });
+  }),
+  http.get('/api/project/:key/issue', async (req) => {
+    const key = DString.validate(req.params.key).unwrap();
+    const url = new URL(req.request.url, 'http://localhost');
+    const issueList = mockIssues.find((i) => i.projectKey === key);
+    if (!issueList) {
+      return HttpResponse.json({
+        type: 'error',
+        msg: '找不到项目',
+      });
+    }
+    let result = issueList.issues;
+    url.searchParams.forEach((value, key) => {
+      const checker = struct({
+        [key]: DString.cond((v) => {
+          if (v.toLowerCase().includes(value.toLowerCase())) {
+            return fin();
+          }
+          return leafExpect(value, v);
+        }),
+      });
+      result = result.filter((issue) => checker.guard(issue));
+    });
+    return HttpResponse.json(result);
+  }),
+  http.put('/api/project/:key/issue', async (req) => {
+    const key = DString.validate(req.params.key).unwrap();
+    const reqBody = await req.request.json();
+    const newIssue = DIssueList.validate(reqBody).unwrap();
+    const index = mockIssues.findIndex((i) => i.projectKey === key);
+    if (index === -1) {
+      return HttpResponse.json({
+        type: 'error',
+        msg: '找不到项目',
+      });
+    }
+    mockIssues[index] = {
+      projectKey: key,
+      issues: newIssue.issues,
+    };
+    mockProjects
+      .filter((p) => p.key === key)
+      .forEach((p) => {
+        p.numIssues = newIssue.issues.length;
+      });
     return HttpResponse.json({
       type: 'success',
       msg: '更新成功',

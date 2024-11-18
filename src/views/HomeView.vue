@@ -148,10 +148,6 @@ const onLogout = () => {
         v-else-if="navSelected[0] === '修改密码'"
         :breadcrumbs="['我的面板']"
       />
-      <UserListTab
-        v-else-if="navSelected[0] === '用户管理'"
-        :breadcrumbs="['用户管理']"
-      />
       <ProjectListTab
         v-else-if="navSelected[0] === '项目管理'"
         :breadcrumbs="['项目管理']"
@@ -160,6 +156,14 @@ const onLogout = () => {
         v-else-if="navSelected[0] === '任务分配'"
         :breadcrumbs="['任务分配']"
       ></ProjectDevTab>
+      <ProjectIssueTab
+        v-else-if="navSelected[0] === '缺陷管理'"
+        :breadcrumbs="['缺陷管理']"
+      />
+      <UserListTab
+        v-else-if="navSelected[0] === '用户管理'"
+        :breadcrumbs="['用户管理']"
+      />
       <v-container v-else>
         <p>{{ navSelected[0] }} 尚未开发</p>
       </v-container>
