@@ -145,7 +145,7 @@ const onAddUser = async () => {
 <template>
   <v-breadcrumbs :items="[...breadcrumbs, '用户列表']"></v-breadcrumbs>
   <v-container class="d-flex justify-center">
-    <v-card width="min(800px, 100%)" class="ma-5">
+    <v-card width="min(1000px, 100%)" class="ma-5">
       <v-card-title>
         <div class="d-flex align-center ga-3">
           <v-icon>mdi-account-box-multiple</v-icon>
