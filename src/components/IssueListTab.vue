@@ -7,15 +7,23 @@ import {
   issueLevelLiterals,
   issueStatusLiterals,
   issueTagLiterals,
+  createIssueApi,
+  getModulesApi,
+  deleteIssueApi,
 } from '@/utils/projects';
 import { useRefreshCounter } from '@/utils/storage';
-import { useDebounceFn } from '@vueuse/core';
+import { asyncComputed, useDebounceFn } from '@vueuse/core';
 import { wrapAsyncFn } from '@yyhhenry/rust-result';
-import { ref, watch } from 'vue';
+import { ref, watch, computed } from 'vue';
+import { accountStorage } from '@/utils/account';
 
 const props = defineProps<{
   projectKey: string;
   breadcrumbs: string[];
+}>();
+
+defineEmits<{
+  (event: 'close'): void;
 }>();
 
 const issuesRefreshCounter = useRefreshCounter();
@@ -51,6 +59,87 @@ const fetchIssues = async () => {
 const debouncedFetchIssues = useDebounceFn(fetchIssues, 500);
 watch(issuesRefreshCounter.counter, fetchIssues, { immediate: true });
 watch(searchReq, debouncedFetchIssues, { deep: true });
+
+const addDialog = ref(false);
+const addIssue = ref<IssueInfo>({
+  id: '',
+  moduleName: '',
+  featureName: '',
+  title: '',
+  description: '',
+  level: '一般',
+  creatorUsername: accountStorage.value?.username ?? '',
+  devUsername: '',
+  createTime: new Date().toISOString(),
+  solveTime: undefined,
+  status: '开放中',
+  tag: '未解决',
+  feedback: undefined,
+});
+const addConfirmDialog = ref(false);
+const onAddConfirm = () => {
+  if (
+    addIssue.value.title === '' ||
+    addIssue.value.moduleName === '' ||
+    addIssue.value.featureName === '' ||
+    addIssue.value.creatorUsername === ''
+  ) {
+    GSnackbar.error('请填写完整信息');
+    return;
+  }
+  addConfirmDialog.value = true;
+};
+const onAdd = async () => {
+  const res = await wrapAsyncFn(createIssueApi)(
+    props.projectKey,
+    addIssue.value,
+  );
+  res.match(
+    () => {
+      GSnackbar.success('添加Issue成功');
+      issuesRefreshCounter.refresh();
+      addDialog.value = false;
+    },
+    (e) => GSnackbar.error(e.message),
+  );
+};
+
+const deleteConfirm = ref(false);
+const deleteTarget = ref('');
+const onDelete = async () => {
+  const res = await wrapAsyncFn(deleteIssueApi)(
+    props.projectKey,
+    deleteTarget.value,
+  );
+  res.match(
+    () => {
+      GSnackbar.success('删除Issue成功');
+      issuesRefreshCounter.refresh();
+    },
+    (e) => GSnackbar.error(e.message),
+  );
+};
+
+const modules = asyncComputed(async () => {
+  const res = await wrapAsyncFn(getModulesApi)(props.projectKey);
+  return res.unwrapOrElse((e) => {
+    GSnackbar.error(e.message);
+    return [];
+  });
+});
+const availableModules = computed(() => [
+  '',
+  ...(modules.value?.map((m) => m.name) ?? []),
+]);
+const availableFeatures = computed(() => {
+  const selectedModule = addDialog.value ? addIssue.value.moduleName : '';
+  return [
+    '',
+    ...(modules.value
+      ?.find((m) => m.name === selectedModule)
+      ?.features.map((f) => f.name) ?? []),
+  ];
+});
 </script>
 <template>
   <v-breadcrumbs :items="[...breadcrumbs, 'Issue列表']" />
@@ -173,7 +262,12 @@ watch(searchReq, debouncedFetchIssues, { deep: true });
               <th>创建时间</th>
               <th>解决时间</th>
               <th>
-                <v-btn color="error" prepend-icon="mdi-plus">添加</v-btn>
+                <v-btn
+                  color="error"
+                  prepend-icon="mdi-plus"
+                  @click="addDialog = true"
+                  >添加</v-btn
+                >
               </th>
             </tr>
           </thead>
@@ -186,11 +280,33 @@ watch(searchReq, debouncedFetchIssues, { deep: true });
               <td>{{ issue.devUsername }}</td>
               <td>{{ issue.status }}</td>
               <td>{{ issue.tag }}</td>
-              <td>{{ issue.createTime }}</td>
-              <td>{{ issue.solveTime }}</td>
+              <td>
+                <v-tooltip location="bottom">
+                  <template #activator="{ props }">
+                    <span v-bind="props">{{ issue.createTime }}</span>
+                  </template>
+                  {{ issue.description }}
+                </v-tooltip>
+              </td>
+              <td>
+                <v-tooltip location="bottom">
+                  <template #activator="{ props }">
+                    <span v-bind="props">{{ issue.solveTime || '/' }}</span>
+                  </template>
+                  {{ issue.feedback }}
+                </v-tooltip>
+              </td>
               <td>
                 <v-btn variant="text" icon="mdi-pencil-box-outline"></v-btn>
-                <v-btn variant="text" icon="mdi-delete" color="error"></v-btn>
+                <v-btn
+                  variant="text"
+                  icon="mdi-delete"
+                  color="error"
+                  @click="
+                    deleteTarget = issue.id;
+                    deleteConfirm = true;
+                  "
+                ></v-btn>
               </td>
             </tr>
           </tbody>
@@ -198,4 +314,90 @@ watch(searchReq, debouncedFetchIssues, { deep: true });
       </v-card-text>
     </v-card>
   </v-container>
+  <v-dialog v-model="addDialog" :max-width="600">
+    <v-card>
+      <v-card-title>添加Issue</v-card-title>
+      <v-card-text>
+        <v-text-field
+          v-model="addIssue.title"
+          label="标题"
+          required
+        ></v-text-field>
+        <v-select
+          v-model="addIssue.moduleName"
+          :items="availableModules"
+          item-title="name"
+          label="模块"
+          required
+        ></v-select>
+        <v-select
+          v-model="addIssue.featureName"
+          :items="availableFeatures"
+          label="功能"
+          required
+        ></v-select>
+        <v-text-field
+          v-model="addIssue.description"
+          label="描述"
+          required
+        ></v-text-field>
+        <v-select
+          v-model="addIssue.level"
+          :items="issueLevelLiterals"
+          label="严重程度"
+          required
+        ></v-select>
+      </v-card-text>
+      <v-card-actions>
+        <v-spacer></v-spacer>
+        <v-btn size="large" variant="text" @click="addDialog = false"
+          >取消</v-btn
+        >
+        <v-btn size="large" variant="tonal" color="error" @click="onAddConfirm"
+          >添加</v-btn
+        >
+      </v-card-actions>
+    </v-card>
+  </v-dialog>
+  <v-dialog v-model="addConfirmDialog" :max-width="450">
+    <v-card>
+      <v-card-title>添加Issue {{ addIssue.title }}</v-card-title>
+      <v-card-text>确定添加Issue吗？</v-card-text>
+      <v-card-actions>
+        <v-spacer></v-spacer>
+        <v-btn size="large" @click="addConfirmDialog = false">取消</v-btn>
+        <v-btn
+          size="large"
+          variant="tonal"
+          color="error"
+          @click="
+            addConfirmDialog = false;
+            onAdd();
+          "
+          >确定</v-btn
+        >
+      </v-card-actions>
+    </v-card>
+  </v-dialog>
+  <v-dialog v-model="deleteConfirm" :max-width="450">
+    <v-card>
+      <v-card-title>删除Issue {{ deleteTarget }}</v-card-title>
+      <v-card-text>确定删除Issue吗？</v-card-text>
+      <v-card-actions>
+        <v-spacer></v-spacer>
+        <v-btn size="large" @click="deleteConfirm = false">取消</v-btn>
+        <v-btn
+          size="large"
+          variant="tonal"
+          color="error"
+          @click="
+            deleteConfirm = false;
+            onDelete();
+          "
+        >
+          确定
+        </v-btn>
+      </v-card-actions>
+    </v-card>
+  </v-dialog>
 </template>

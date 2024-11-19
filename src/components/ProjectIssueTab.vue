@@ -42,6 +42,10 @@ const issueTab = ref<'issue' | 'report'>();
     v-if="issueTab === 'issue'"
     :projectKey="actionsTarget"
     :breadcrumbs="[...breadcrumbs, '项目列表']"
+    @close="
+      issueTab = undefined;
+      projectsRefreshCounter.refresh();
+    "
   ></IssueListTab>
   <v-container class="d-flex justify-center" v-if="issueTab === undefined">
     <v-card width="min(1000px, 100%)" class="ma-5">
