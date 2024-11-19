@@ -10,6 +10,8 @@ import {
   createIssueApi,
   getModulesApi,
   deleteIssueApi,
+  updateIssueApi,
+  IssueStatus,
 } from '@/utils/projects';
 import { useRefreshCounter } from '@/utils/storage';
 import { asyncComputed, useDebounceFn } from '@vueuse/core';
@@ -89,7 +91,12 @@ const onAddConfirm = () => {
   }
   addConfirmDialog.value = true;
 };
+const nowDateTime = () => {
+  const now = new Date();
+  return `${now.toLocaleDateString().replaceAll('/', '-')} ${now.toLocaleTimeString()}`;
+};
 const onAdd = async () => {
+  addIssue.value.createTime = nowDateTime();
   const res = await wrapAsyncFn(createIssueApi)(
     props.projectKey,
     addIssue.value,
@@ -115,6 +122,62 @@ const onDelete = async () => {
     () => {
       GSnackbar.success('删除Issue成功');
       issuesRefreshCounter.refresh();
+    },
+    (e) => GSnackbar.error(e.message),
+  );
+};
+
+const closeIssueDialog = ref(false);
+const closeTarget = ref<IssueInfo | null>(null);
+const closeFeedback = ref('');
+const closeStatus = ref<IssueStatus>('开放中');
+
+const onCloseIssue = async () => {
+  if (!closeTarget.value || !accountStorage.value) return;
+  const updatedIssue: IssueInfo = {
+    ...closeTarget.value,
+    status: closeStatus.value,
+    devUsername: accountStorage.value.username,
+    solveTime:
+      closeStatus.value === closeTarget.value.status
+        ? closeTarget.value.solveTime
+        : nowDateTime(),
+    feedback: closeFeedback.value,
+  };
+  const res = await wrapAsyncFn(updateIssueApi)(
+    props.projectKey,
+    updatedIssue.id,
+    updatedIssue,
+  );
+  res.match(
+    () => {
+      GSnackbar.success('修改Issue成功');
+      issuesRefreshCounter.refresh();
+      closeIssueDialog.value = false;
+      closeFeedback.value = '';
+    },
+    (e) => GSnackbar.error(e.message),
+  );
+};
+
+const markIssueDialog = ref(false);
+const markTarget = ref<IssueInfo>();
+
+const onMarkIssue = async () => {
+  if (!markTarget.value) return;
+  if (markTarget.value.devUsername === null) {
+    markTarget.value.devUsername = '';
+  }
+  const res = await wrapAsyncFn(updateIssueApi)(
+    props.projectKey,
+    markTarget.value.id,
+    markTarget.value,
+  );
+  res.match(
+    () => {
+      GSnackbar.success('标记Issue成功');
+      issuesRefreshCounter.refresh();
+      markIssueDialog.value = false;
     },
     (e) => GSnackbar.error(e.message),
   );
@@ -297,7 +360,28 @@ const availableFeatures = computed(() => {
                 </v-tooltip>
               </td>
               <td>
-                <v-btn variant="text" icon="mdi-pencil-box-outline"></v-btn>
+                <v-btn
+                  variant="text"
+                  icon="mdi-check-circle"
+                  color="success"
+                  @click="
+                    closeTarget = issue;
+                    closeIssueDialog = true;
+                    closeFeedback = issue.feedback ?? '';
+                    closeStatus = issue.status;
+                  "
+                  title="关闭"
+                ></v-btn>
+                <v-btn
+                  variant="text"
+                  icon="mdi-tag-outline"
+                  color="info"
+                  @click="
+                    markTarget = { ...issue };
+                    markIssueDialog = true;
+                  "
+                  title="标记"
+                ></v-btn>
                 <v-btn
                   variant="text"
                   icon="mdi-delete"
@@ -397,6 +481,73 @@ const availableFeatures = computed(() => {
         >
           确定
         </v-btn>
+      </v-card-actions>
+    </v-card>
+  </v-dialog>
+  <v-dialog v-model="closeIssueDialog" :max-width="600">
+    <v-card>
+      <v-card-title>关闭Issue</v-card-title>
+      <v-card-text>
+        <div class="text-body-1 mb-4">正在关闭: {{ closeTarget?.title }}</div>
+        <v-textarea
+          v-model="closeFeedback"
+          label="反馈信息"
+          required
+        ></v-textarea>
+        <v-radio-group v-model="closeStatus">
+          <v-radio value="开放中" label="标记为开放中"> </v-radio>
+          <v-radio value="已解决" label="标记为已解决"></v-radio>
+          <v-radio value="已关闭" label="标记为已关闭"></v-radio>
+        </v-radio-group>
+      </v-card-text>
+      <v-card-actions>
+        <v-spacer></v-spacer>
+        <v-btn size="large" @click="closeIssueDialog = false">取消</v-btn>
+        <v-btn
+          size="large"
+          variant="tonal"
+          color="success"
+          @click="onCloseIssue"
+          >确定</v-btn
+        >
+      </v-card-actions>
+    </v-card>
+  </v-dialog>
+
+  <v-dialog v-model="markIssueDialog" :max-width="600">
+    <v-card>
+      <v-card-title>标记Issue</v-card-title>
+      <v-card-text v-if="markTarget !== undefined">
+        <v-select
+          v-model="markTarget.moduleName"
+          :items="availableModules"
+          label="模块"
+          required
+        ></v-select>
+        <v-select
+          v-model="markTarget.featureName"
+          :items="availableFeatures"
+          label="功能"
+          required
+        ></v-select>
+        <v-text-field
+          v-model="markTarget.devUsername"
+          label="开发者"
+          clearable
+        ></v-text-field>
+        <v-select
+          v-model="markTarget.tag"
+          :items="issueTagLiterals"
+          label="标签"
+          required
+        ></v-select>
+      </v-card-text>
+      <v-card-actions>
+        <v-spacer></v-spacer>
+        <v-btn size="large" @click="markIssueDialog = false">取消</v-btn>
+        <v-btn size="large" variant="tonal" color="info" @click="onMarkIssue"
+          >确定</v-btn
+        >
       </v-card-actions>
     </v-card>
   </v-dialog>

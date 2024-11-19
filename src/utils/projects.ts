@@ -146,6 +146,7 @@ export const issueLevelLiterals = [
 export const DIssueLevel = literal(...issueLevelLiterals);
 export const issueStatusLiterals = ['开放中', '已关闭', '已解决'] as const;
 export const DIssueStatus = literal(...issueStatusLiterals);
+export type IssueStatus = (typeof issueStatusLiterals)[number];
 export const issueTagLiterals = [
   '未解决',
   '已解决',
