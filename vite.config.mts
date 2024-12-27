@@ -35,6 +35,7 @@ export default defineConfig({
     },
     extensions: ['.js', '.json', '.jsx', '.mjs', '.ts', '.tsx', '.vue'],
   },
+  base: '/webapp',
   server: {
     port: 3000,
   },
